@@ -81,9 +81,15 @@ WORKDIR /root
 
 RUN apt-get -y --no-install-recommends install \
      dante-server \
-     net-tools && \
+     net-tools \
+     python3-pip \
+     netcat-openbsd && \
+     pip3 install vncdotool && \
      apt-get clean && \
      rm -rf /var/lib/apt/lists/*
+
+COPY ./docker/autofill-credentials.sh /
+RUN chmod +x /autofill-credentials.sh
 
 COPY ./docker/danted.conf.in /etc/
 COPY ./docker/danted.sh /
