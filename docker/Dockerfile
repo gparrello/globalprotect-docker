@@ -83,7 +83,8 @@ RUN apt-get -y --no-install-recommends install \
      dante-server \
      net-tools \
      python3-pip \
-     netcat-openbsd && \
+     netcat-openbsd \
+     oathtool && \
      pip3 install vncdotool && \
      apt-get clean && \
      rm -rf /var/lib/apt/lists/*

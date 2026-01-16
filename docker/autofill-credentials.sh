@@ -3,8 +3,8 @@
 VNC_HOST="${VNC_HOST:-localhost}"
 VNC_PORT="${VNC_PORT:-8998}"
 
-if [[ -z "${GP_PORTAL}" ]] || [[ -z "${GP_USERNAME}" ]] || [[ -z "${GP_PASSWORD}" ]]; then
-    echo "GP_PORTAL, GP_USERNAME, and GP_PASSWORD must be set"
+if [[ -z "${GP_PORTAL}" ]] || [[ -z "${GP_USERNAME}" ]] || [[ -z "${GP_PASSWORD}" ]] || [[ -z "${GP_TOTP_SECRET}" ]]; then
+    echo "GP_PORTAL, GP_USERNAME, GP_PASSWORD, and GP_TOTP_SECRET must be set"
     exit 1
 fi
 
@@ -31,9 +31,19 @@ sleep 10
 
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key ctrl-a
 vncdo -s "${VNC_HOST}::${VNC_PORT}" type "${GP_USERNAME}"
-vncdo -s "${VNC_HOST}::${VNC_PORT}" key tab
+vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
+
+sleep 5
+
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key ctrl-a
 vncdo -s "${VNC_HOST}::${VNC_PORT}" type "${GP_PASSWORD}"
+vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
+
+sleep 5
+
+TOTP_CODE=$(oathtool --totp -b "${GP_TOTP_SECRET}")
+vncdo -s "${VNC_HOST}::${VNC_PORT}" key ctrl-a
+vncdo -s "${VNC_HOST}::${VNC_PORT}" type "${TOTP_CODE}"
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
 
 echo "Credentials submitted"
