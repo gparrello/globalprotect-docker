@@ -58,9 +58,4 @@ vncdo -s "${VNC_HOST}::${VNC_PORT}" key ctrl-a
 vncdo -s "${VNC_HOST}::${VNC_PORT}" type "${TOTP_CODE}"
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
 
-sleep 5
-
-vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
-vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
-
 echo "Credentials submitted"
