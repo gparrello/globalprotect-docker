@@ -1,5 +1,3 @@
-version: '2.4'
- 
 services:
   globalprotect:
     image: globalprotect-docker
@@ -9,8 +7,6 @@ services:
     env_file:
       - path: .env
         required: false
-    volumes:
-      - ./config/com.yuezk.qt:/root/.config/com.yuezk.qt
     devices:
       - /dev/net/tun
     cap_add:
@@ -20,7 +16,7 @@ services:
       - 127.0.0.1:8085:1080
     networks:
       - globalprotect
- 
+
 networks:
   globalprotect:
     external: false
