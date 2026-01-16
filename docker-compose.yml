@@ -6,6 +6,8 @@ services:
     hostname: globalprotect
     restart: unless-stopped
     tty: true
+    env_file:
+      - .env
     volumes:
       - ./config/com.yuezk.qt:/root/.config/com.yuezk.qt
     devices:
@@ -14,7 +16,7 @@ services:
       - NET_ADMIN
     ports:
       - 127.0.0.1:8083:8083
-      - 127.0.0.1:8080:1080
+      - 127.0.0.1:8085:1080
     networks:
       - globalprotect
  

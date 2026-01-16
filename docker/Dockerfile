@@ -59,6 +59,8 @@ RUN sudo ssh-keygen -t rsa -q -f "/root/.ssh/id_rsa" -N "" && \
 # We use supervisor instead of systemd to start multiple applications.
 COPY ./docker/supervisord.conf /etc/
 COPY ./docker/supervisor-log-prefix.sh /
+COPY ./docker/gpagent-wrapper.sh /
+RUN chmod +x /gpagent-wrapper.sh
 
 COPY --from=builder /gpagent/install/ /usr
 
