@@ -23,8 +23,10 @@ done
 sleep 5
 
 echo "Typing credentials..."
+vncdo -s "${VNC_HOST}::${VNC_PORT}" key ctrl-a
 vncdo -s "${VNC_HOST}::${VNC_PORT}" type "${GP_USERNAME}"
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key tab
+vncdo -s "${VNC_HOST}::${VNC_PORT}" key ctrl-a
 vncdo -s "${VNC_HOST}::${VNC_PORT}" type "${GP_PASSWORD}"
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
 
