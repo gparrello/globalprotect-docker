@@ -65,8 +65,8 @@ COPY --from=builder /gpagent/install/ /usr
 # Allow plain username/password storage in the configuration folder,
 # because all keyrings require D-Bus, which we don't have in container.
 ENV GPAGENT_ALLOW_PLAIN_PASSWORD=1
-# Disable QtWebEngine sandbox to allow running as root in container
 ENV QTWEBENGINE_DISABLE_SANDBOX=1
+ENV QTWEBENGINE_REMOTE_DEBUGGING=9222
 
 RUN apt-get -y --no-install-recommends install \
      git
@@ -84,11 +84,16 @@ RUN apt-get -y --no-install-recommends install \
      net-tools \
      python3-pip \
      netcat-openbsd \
-     oathtool && \
+     oathtool \
+     curl && \
+     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+     apt-get install -y nodejs && \
+     npm install -g playwright && \
      pip3 install vncdotool && \
      apt-get clean && \
      rm -rf /var/lib/apt/lists/*
 
+COPY ./docker/autofill-credentials.js /
 COPY ./docker/autofill-credentials.sh /
 RUN chmod +x /autofill-credentials.sh
 
