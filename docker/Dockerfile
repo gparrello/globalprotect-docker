@@ -88,12 +88,14 @@ RUN apt-get -y --no-install-recommends install \
      curl && \
      curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
      apt-get install -y nodejs && \
-     npm install -g playwright && \
      pip3 install vncdotool && \
      apt-get clean && \
      rm -rf /var/lib/apt/lists/*
 
-COPY ./docker/autofill-credentials.js /
+COPY ./docker/autofill-credentials.js /app/
+COPY ./docker/package.json /app/
+RUN cd /app && npm install
+
 COPY ./docker/autofill-credentials.sh /
 RUN chmod +x /autofill-credentials.sh
 

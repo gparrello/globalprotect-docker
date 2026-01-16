@@ -41,6 +41,6 @@ done
 sleep 3
 
 echo "Step 2: Running Playwright for OneLogin authentication..."
-node /autofill-credentials.js
+cd /app && node autofill-credentials.js
 
 echo "Autofill complete"
