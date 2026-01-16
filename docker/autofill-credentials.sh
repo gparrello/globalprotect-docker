@@ -3,8 +3,8 @@
 VNC_HOST="${VNC_HOST:-localhost}"
 VNC_PORT="${VNC_PORT:-8998}"
 
-if [[ -z "${GP_USERNAME}" ]] || [[ -z "${GP_PASSWORD}" ]]; then
-    echo "GP_USERNAME and GP_PASSWORD must be set"
+if [[ -z "${GP_PORTAL}" ]] || [[ -z "${GP_USERNAME}" ]] || [[ -z "${GP_PASSWORD}" ]]; then
+    echo "GP_PORTAL, GP_USERNAME, and GP_PASSWORD must be set"
     exit 1
 fi
 
@@ -23,6 +23,9 @@ done
 sleep 5
 
 echo "Typing credentials..."
+vncdo -s "${VNC_HOST}::${VNC_PORT}" key ctrl-a
+vncdo -s "${VNC_HOST}::${VNC_PORT}" type "${GP_PORTAL}"
+vncdo -s "${VNC_HOST}::${VNC_PORT}" key tab
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key ctrl-a
 vncdo -s "${VNC_HOST}::${VNC_PORT}" type "${GP_USERNAME}"
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key tab
