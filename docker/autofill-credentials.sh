@@ -41,6 +41,11 @@ vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
 
 sleep 5
 
+vncdo -s "${VNC_HOST}::${VNC_PORT}" key tab
+vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
+
+sleep 3
+
 TOTP_CODE=$(oathtool --totp -b "${GP_TOTP_SECRET}")
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key ctrl-a
 vncdo -s "${VNC_HOST}::${VNC_PORT}" type "${TOTP_CODE}"
