@@ -65,6 +65,8 @@ COPY --from=builder /gpagent/install/ /usr
 # Allow plain username/password storage in the configuration folder,
 # because all keyrings require D-Bus, which we don't have in container.
 ENV GPAGENT_ALLOW_PLAIN_PASSWORD=1
+# Disable QtWebEngine sandbox to allow running as root in container
+ENV QTWEBENGINE_DISABLE_SANDBOX=1
 
 RUN apt-get -y --no-install-recommends install \
      git
