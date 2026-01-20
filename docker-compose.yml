@@ -1,6 +1,6 @@
 services:
   globalprotect:
-    image: globalprotect-docker
+    image: globalprotect-docker:vnc-autofill
     hostname: globalprotect
     restart: unless-stopped
     tty: true
@@ -13,7 +13,7 @@ services:
       - NET_ADMIN
     ports:
       - 8083:8083
-      - 8080:1080
+      - 8090:1080
     networks:
       - globalprotect
 
