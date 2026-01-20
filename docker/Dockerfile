@@ -17,7 +17,7 @@ RUN cd /gpagent && \
     mkdir build && \
     cd build && \
     cmake -DCMAKE_INSTALL_PREFIX=/gpagent/install .. && \
-    make -j12 && \
+    make -j$(nproc) && \
     make install
 
 FROM ubuntu:22.04
