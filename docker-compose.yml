@@ -1,5 +1,8 @@
 services:
   globalprotect:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
     image: globalprotect-docker:vnc-autofill
     hostname: globalprotect
     restart: unless-stopped
