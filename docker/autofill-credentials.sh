@@ -68,7 +68,6 @@ sleep 3
 
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key esc
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key tab
-vncdo -s "${VNC_HOST}::${VNC_PORT}" key tab
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
 
 echo "Credentials submitted"
