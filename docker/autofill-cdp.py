@@ -1,11 +1,11 @@
-#!/usr/bin/env python3 -u
+#!/usr/bin/env python3
 import json
 import time
 import os
 import subprocess
 import sys
 import requests
-from websocket import create_connection
+from websocket import create_connection, WebSocketTimeoutException
 
 # Get env vars
 username = os.environ.get('GP_USERNAME')
@@ -15,7 +15,7 @@ step_delay = int(os.environ.get('STEP_DELAY', 5))
 
 if not all([username, password, totp_secret]):
     print("GP_USERNAME, GP_PASSWORD, and GP_TOTP_SECRET must be set")
-    exit(1)
+    sys.exit(1)
 
 def get_totp():
     result = subprocess.run(['oathtool', '--totp', '-b', totp_secret], capture_output=True, text=True)
@@ -35,28 +35,47 @@ def wait_for_devtools():
         time.sleep(1)
     raise Exception("DevTools not available")
 
-def evaluate_js(ws, expression, timeout=10):
-    msg_id = int(time.time() * 1000)
-    ws.send(json.dumps({
-        'id': msg_id,
-        'method': 'Runtime.evaluate',
-        'params': {'expression': expression, 'returnByValue': True}
-    }))
-    # Read response with timeout
-    ws.settimeout(timeout)
-    start = time.time()
-    while time.time() - start < timeout:
-        try:
-            data = ws.recv()
-            result = json.loads(data)
-            if result.get('id') == msg_id:
-                return result
-            # Ignore events without matching id
-        except Exception as e:
-            print(f"WebSocket error: {e}")
-            break
-    print(f"Timeout waiting for response to message {msg_id}")
-    return None
+class CDPConnection:
+    def __init__(self, ws_url):
+        self.ws = create_connection(ws_url, timeout=30)
+        self.msg_id = 0
+    
+    def send_command(self, method, params=None):
+        self.msg_id += 1
+        msg = {'id': self.msg_id, 'method': method}
+        if params:
+            msg['params'] = params
+        self.ws.send(json.dumps(msg))
+        
+        # Wait for response with matching ID
+        while True:
+            try:
+                data = self.ws.recv()
+                result = json.loads(data)
+                # Skip events (they have 'method' key)
+                if 'id' in result and result['id'] == self.msg_id:
+                    if 'error' in result:
+                        print(f"CDP Error: {result['error']}")
+                    return result.get('result', {})
+            except WebSocketTimeoutException:
+                print(f"Timeout waiting for CDP response")
+                return None
+            except Exception as e:
+                print(f"WebSocket error: {e}")
+                return None
+    
+    def evaluate(self, expression):
+        result = self.send_command('Runtime.evaluate', {
+            'expression': expression,
+            'returnByValue': True,
+            'awaitPromise': False
+        })
+        if result and 'result' in result:
+            return result['result'].get('value')
+        return None
+    
+    def close(self):
+        self.ws.close()
 
 def main():
     print("Waiting for DevTools...")
@@ -74,74 +93,120 @@ def main():
         return
     
     print(f"Connecting to {page['webSocketDebuggerUrl']}")
-    ws = create_connection(page['webSocketDebuggerUrl'])
+    cdp = CDPConnection(page['webSocketDebuggerUrl'])
     
-    # Enable Runtime
-    ws.send(json.dumps({'id': 1, 'method': 'Runtime.enable'}))
-    ws.recv()
-    
+    # Initial delay to let page load
     time.sleep(step_delay)
     
-    # Step 1: Fill username (OneLogin has input with name="username" or similar)
+    # Get current URL to understand which page we're on
+    url = cdp.evaluate('window.location.href')
+    print(f"Current URL: {url}")
+    
+    # Step 1: Fill username
     print("Step 1: Filling username...")
-    # Escape password and username for JS
     js_username = json.dumps(username)
-    evaluate_js(ws, f'''
+    cdp.evaluate(f'''
         (function() {{
-            var input = document.querySelector('input[name="username"], input[type="email"], input#username');
+            var input = document.querySelector('input[name="username"], input[type="email"], input#username, input[autocomplete="username"]');
             if (input) {{ 
+                input.focus();
                 input.value = {js_username}; 
                 input.dispatchEvent(new Event('input', {{bubbles: true}}));
                 input.dispatchEvent(new Event('change', {{bubbles: true}}));
+                console.log('Username filled');
+                return true;
             }}
+            console.log('Username input not found');
+            return false;
         }})()
     ''')
     
-    # Click continue/next
-    evaluate_js(ws, '''
+    # Click continue/next button
+    cdp.evaluate('''
         (function() {
-            var btn = document.querySelector('button[type="submit"], input[type="submit"], button.btn-primary, #login-button');
-            if (btn) btn.click();
+            var btn = document.querySelector('input[type="submit"], button[type="submit"], button.button--primary, #okta-signin-submit');
+            if (btn) { btn.click(); return true; }
+            return false;
         })()
     ''')
     
     time.sleep(step_delay)
+    
+    # Check URL to see if we moved to password page or OneLogin
+    url = cdp.evaluate('window.location.href')
+    print(f"After username, URL: {url}")
     
     # Step 2: Fill password
     print("Step 2: Filling password...")
     js_password = json.dumps(password)
-    evaluate_js(ws, f'''
+    cdp.evaluate(f'''
         (function() {{
             var input = document.querySelector('input[name="password"], input[type="password"]');
             if (input) {{ 
+                input.focus();
                 input.value = {js_password}; 
                 input.dispatchEvent(new Event('input', {{bubbles: true}}));
                 input.dispatchEvent(new Event('change', {{bubbles: true}}));
+                console.log('Password filled');
+                return true;
             }}
+            console.log('Password input not found');
+            return false;
         }})()
     ''')
     
-    evaluate_js(ws, '''
+    # Click submit
+    cdp.evaluate('''
         (function() {
-            var btn = document.querySelector('button[type="submit"], input[type="submit"], button.btn-primary, #login-button');
-            if (btn) btn.click();
+            var btn = document.querySelector('input[type="submit"], button[type="submit"], button.button--primary, #okta-signin-submit');
+            if (btn) { btn.click(); return true; }
+            return false;
         })()
     ''')
     
     time.sleep(step_delay)
     
-    # Step 3-4: Select MFA method (Google Authenticator)
+    # Check URL after password
+    url = cdp.evaluate('window.location.href')
+    print(f"After password, URL: {url}")
+    
+    # Step 3: Select MFA method (Google Authenticator)
     print("Step 3: Selecting MFA method...")
-    evaluate_js(ws, '''
+    cdp.evaluate('''
         (function() {
-            var options = document.querySelectorAll('.mfa-option, [data-mfa], button, a');
+            // Look for Google Authenticator option
+            var options = document.querySelectorAll('a[data-se], button[data-se], .authenticator-row, [data-factor]');
             for (var opt of options) {
-                var text = opt.textContent.toLowerCase();
-                if (text.includes('google') || text.includes('authenticator') || text.includes('otp')) {
+                var text = (opt.textContent || '').toLowerCase();
+                var dataSe = (opt.getAttribute('data-se') || '').toLowerCase();
+                if (text.includes('google') || text.includes('authenticator') || dataSe.includes('google')) {
                     opt.click();
-                    break;
+                    console.log('Selected MFA option');
+                    return true;
                 }
             }
+            // Also try clicking any visible OTP/TOTP link
+            var links = document.querySelectorAll('a, button');
+            for (var link of links) {
+                var text = (link.textContent || '').toLowerCase();
+                if (text.includes('otp') || text.includes('totp') || text.includes('authenticator')) {
+                    link.click();
+                    return true;
+                }
+            }
+            return false;
+        })()
+    ''')
+    
+    time.sleep(step_delay)
+    
+    # Step 4: Confirm MFA (if there's a verify button)
+    print("Step 4: Confirming MFA selection...")
+    cdp.evaluate('''
+        (function() {
+            var btn = document.querySelector('input[type="submit"], button[type="submit"], button.button--primary, [data-type="save"]');
+            if (btn) { btn.click(); return true; }
+            return false;
         })()
     ''')
     
@@ -152,27 +217,34 @@ def main():
     totp = get_totp()
     print(f"Generated TOTP: {totp}")
     js_totp = json.dumps(totp)
-    evaluate_js(ws, f'''
+    cdp.evaluate(f'''
         (function() {{
-            var input = document.querySelector('input[name="otp"], input[name="totp"], input[type="tel"], input.otp-input, input#otp');
+            var input = document.querySelector('input[name="answer"], input[name="otp"], input[name="totp"], input[name="passcode"], input[type="tel"], input.otp-input, input#otp');
             if (input) {{ 
+                input.focus();
                 input.value = {js_totp}; 
                 input.dispatchEvent(new Event('input', {{bubbles: true}}));
                 input.dispatchEvent(new Event('change', {{bubbles: true}}));
+                console.log('TOTP filled');
+                return true;
             }}
+            console.log('TOTP input not found');
+            return false;
         }})()
     ''')
     
-    evaluate_js(ws, '''
+    # Click verify
+    cdp.evaluate('''
         (function() {
-            var btn = document.querySelector('button[type="submit"], input[type="submit"], button.btn-primary, #verify-button');
-            if (btn) btn.click();
+            var btn = document.querySelector('input[type="submit"], button[type="submit"], button.button--primary, [data-type="save"]');
+            if (btn) { btn.click(); return true; }
+            return false;
         })()
     ''')
     
     time.sleep(step_delay)
     print("Credentials submitted")
-    ws.close()
+    cdp.close()
 
 if __name__ == '__main__':
     main()
