@@ -22,45 +22,58 @@ done
 
 sleep $STEP_DELAY
 
-# Focus the GlobalProtect Login window
-echo "Focusing GlobalProtect Login window..."
+# Find the GlobalProtect Login window
+echo "Finding GlobalProtect Login window..."
 WIN_ID=$(xdotool search --name "GlobalProtect Login" | head -1)
-if [[ -n "$WIN_ID" ]]; then
-    xdotool windowactivate --sync "$WIN_ID"
-    echo "Window focused: $WIN_ID"
-else
-    echo "WARNING: Could not find GlobalProtect Login window"
+if [[ -z "$WIN_ID" ]]; then
+    echo "ERROR: Could not find GlobalProtect Login window"
+    exit 1
 fi
+echo "Found window: $WIN_ID"
 
-echo "Typing credentials..."
-xdotool key ctrl+a
-xdotool type "${GP_USERNAME}"
-xdotool key Return
+# Helper function to send keys to the window
+send_key() {
+    xdotool key --window "$WIN_ID" "$@"
+}
 
-sleep $STEP_DELAY
+send_type() {
+    xdotool type --window "$WIN_ID" "$@"
+}
 
-xdotool key ctrl+a
-xdotool type "${GP_PASSWORD}"
-xdotool key Return
-
-sleep $STEP_DELAY
-
-xdotool key Tab
-xdotool key Tab
-xdotool key Return
+echo "Step 1: Typing username..."
+send_key ctrl+a
+send_type "${GP_USERNAME}"
+send_key Return
 
 sleep $STEP_DELAY
 
-xdotool key Tab
-xdotool key Tab
-xdotool key Return
+echo "Step 2: Typing password..."
+send_key ctrl+a
+send_type "${GP_PASSWORD}"
+send_key Return
 
 sleep $STEP_DELAY
 
+echo "Step 3: Selecting MFA method..."
+send_key Tab
+send_key Tab
+send_key Return
+
+sleep $STEP_DELAY
+
+echo "Step 4: Confirming MFA selection..."
+send_key Tab
+send_key Tab
+send_key Return
+
+sleep $STEP_DELAY
+
+echo "Step 5: Typing TOTP code..."
 TOTP_CODE=$(oathtool --totp -b "${GP_TOTP_SECRET}")
-xdotool key ctrl+a
-xdotool type "${TOTP_CODE}"
-xdotool key Return
+echo "Generated TOTP: $TOTP_CODE"
+send_key ctrl+a
+send_type "${TOTP_CODE}"
+send_key Return
 
 sleep $STEP_DELAY
 
