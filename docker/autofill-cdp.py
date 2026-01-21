@@ -92,8 +92,10 @@ class CDPClient:
     def wait_for_element(self, selector, timeout=60):
         """Wait for an element to appear in the DOM."""
         print(f"Waiting for: {selector}")
+        # Escape the selector for use in JavaScript
+        js_selector = json.dumps(selector)
         for i in range(timeout):
-            if self.evaluate(f'document.querySelector("{selector}") !== null'):
+            if self.evaluate(f'document.querySelector({js_selector}) !== null'):
                 return True
             time.sleep(1)
         print(f"Timeout waiting for: {selector}")
@@ -118,10 +120,11 @@ class CDPClient:
     
     def fill_input(self, selector, value):
         """Fill an input field with proper event dispatch for React."""
+        js_selector = json.dumps(selector)
         js_value = json.dumps(value)
         return self.evaluate(f'''
             (function() {{
-                var input = document.querySelector('{selector}');
+                var input = document.querySelector({js_selector});
                 if (!input) return false;
                 input.focus();
                 input.value = {js_value};
@@ -133,9 +136,10 @@ class CDPClient:
     
     def click(self, selector):
         """Click an element."""
+        js_selector = json.dumps(selector)
         return self.evaluate(f'''
             (function() {{
-                var el = document.querySelector('{selector}');
+                var el = document.querySelector({js_selector});
                 if (el) {{ el.click(); return true; }}
                 return false;
             }})()
