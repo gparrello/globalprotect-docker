@@ -24,6 +24,26 @@ services:
       - 8090:1080
     networks:
       - globalprotect
+    labels:
+      - "autoheal=true"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -x socks5h://localhost:1080 -s -o /dev/null -w '%{http_code}' https://google.com | grep -q '^[23]'"]
+      interval: 30s
+      timeout: 10s
+      start_period: 120s
+      retries: 3
+
+  autoheal:
+    image: willfarrell/autoheal
+    restart: always
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=autoheal
+      - AUTOHEAL_INTERVAL=60
+      - AUTOHEAL_START_PERIOD=180
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - globalprotect
 
 networks:
   globalprotect:
