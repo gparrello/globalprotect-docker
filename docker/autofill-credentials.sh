@@ -22,6 +22,16 @@ done
 
 sleep $STEP_DELAY
 
+# Focus the GlobalProtect Login window
+echo "Focusing GlobalProtect Login window..."
+WIN_ID=$(xdotool search --name "GlobalProtect Login" | head -1)
+if [[ -n "$WIN_ID" ]]; then
+    xdotool windowactivate --sync "$WIN_ID"
+    echo "Window focused: $WIN_ID"
+else
+    echo "WARNING: Could not find GlobalProtect Login window"
+fi
+
 echo "Typing credentials..."
 xdotool key ctrl+a
 xdotool type "${GP_USERNAME}"
