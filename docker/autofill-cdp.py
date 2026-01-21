@@ -296,6 +296,14 @@ def main():
         
         # Detect which page we're on and handle it
         if 'onelogin.com' in url:
+            # Check if page has rendered (React app loaded)
+            root_len = cdp.evaluate('document.getElementById("root") ? document.getElementById("root").innerHTML.length : 0') or 0
+            if root_len < 100 and not page_text.strip():
+                print("OneLogin page not rendered, reloading...")
+                cdp.send('Page.reload', {'ignoreCache': True})
+                time.sleep(5)
+                continue
+            
             if 'Enter your code' in page_text:
                 # TOTP entry page
                 if handle_totp_entry(cdp):
