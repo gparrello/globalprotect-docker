@@ -15,7 +15,7 @@ services:
       - path: .env
         required: false
     volumes:
-      - ./config/com.yuezk.qt:/root/.config/com.yuezk.qt
+      - ${GP_CONFIG_PATH:-./config/com.yuezk.qt}:/root/.config/com.yuezk.qt
     devices:
       - /dev/net/tun
     cap_add:
