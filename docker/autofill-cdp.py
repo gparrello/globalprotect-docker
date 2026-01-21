@@ -98,16 +98,31 @@ def main():
     # Initial delay to let page load
     time.sleep(step_delay)
     
+    # Helper function to wait for an element
+    def wait_for_element(selector, timeout=60):
+        print(f"Waiting for element: {selector}")
+        for i in range(timeout):
+            result = cdp.evaluate(f'document.querySelector("{selector}") !== null')
+            if result:
+                print(f"Found element: {selector}")
+                return True
+            time.sleep(1)
+        print(f"Timeout waiting for element: {selector}")
+        return False
+    
     # Get current URL to understand which page we're on
     url = cdp.evaluate('window.location.href')
     print(f"Current URL: {url}")
     
     # Step 1: Fill username
     print("Step 1: Filling username...")
+    # Wait for any input to appear (page needs to fully render)
+    wait_for_element('input[name="username"], input[type="email"], input#username, input[type="text"]')
+    
     js_username = json.dumps(username)
-    cdp.evaluate(f'''
+    filled = cdp.evaluate(f'''
         (function() {{
-            var input = document.querySelector('input[name="username"], input[type="email"], input#username, input[autocomplete="username"]');
+            var input = document.querySelector('input[name="username"], input[type="email"], input#username, input[autocomplete="username"], input[type="text"]');
             if (input) {{ 
                 input.focus();
                 input.value = {js_username}; 
@@ -120,6 +135,7 @@ def main():
             return false;
         }})()
     ''')
+    print(f"Username filled: {filled}")
     
     # Click continue/next button
     cdp.evaluate('''
@@ -138,8 +154,11 @@ def main():
     
     # Step 2: Fill password
     print("Step 2: Filling password...")
+    # Wait for password input to appear
+    wait_for_element('input[name="password"], input[type="password"]')
+    
     js_password = json.dumps(password)
-    cdp.evaluate(f'''
+    filled = cdp.evaluate(f'''
         (function() {{
             var input = document.querySelector('input[name="password"], input[type="password"]');
             if (input) {{ 
@@ -154,6 +173,7 @@ def main():
             return false;
         }})()
     ''')
+    print(f"Password filled: {filled}")
     
     # Click submit
     cdp.evaluate('''
