@@ -96,13 +96,17 @@ RUN apt-get -y --no-install-recommends install \
      oathtool \
      curl && \
      if [ "$USE_XVFB" = "1" ]; then \
-       apt-get -y --no-install-recommends install xvfb x11vnc; \
+       apt-get -y --no-install-recommends install xvfb x11vnc x11-utils; \
      fi && \
      curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
      apt-get install -y nodejs && \
      pip3 install vncdotool && \
      apt-get clean && \
      rm -rf /var/lib/apt/lists/*
+
+# Copy x11vnc wrapper script (used when USE_XVFB=1)
+COPY ./docker/x11vnc-wrapper.sh /x11vnc-wrapper.sh
+RUN chmod +x /x11vnc-wrapper.sh
 
 # Select supervisord config based on USE_XVFB
 RUN if [ "$USE_XVFB" = "1" ]; then \
