@@ -79,15 +79,7 @@ ENV QT_XCB_GL_INTEGRATION=none
 RUN apt-get -y --no-install-recommends install \
      git
 
-# Setup noVNC to access gpagent via web browser.
-WORKDIR /usr/share/
-RUN git clone https://github.com/kanaka/noVNC.git
-RUN ln -s /usr/share/noVNC/vnc_lite.html /usr/share/noVNC/index.html
-WORKDIR /usr/share/noVNC/utils/
-RUN git clone https://github.com/kanaka/websockify
-WORKDIR /root
-
-# Install Xvfb and x11vnc only if USE_XVFB=1
+# Install Xvfb and xdotool only if USE_XVFB=1
 RUN apt-get -y --no-install-recommends install \
      dante-server \
      net-tools \
@@ -96,17 +88,12 @@ RUN apt-get -y --no-install-recommends install \
      oathtool \
      curl && \
      if [ "$USE_XVFB" = "1" ]; then \
-       apt-get -y --no-install-recommends install xvfb x11vnc x11-utils; \
+       apt-get -y --no-install-recommends install xvfb xdotool x11-utils; \
      fi && \
      curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
      apt-get install -y nodejs && \
-     pip3 install vncdotool && \
      apt-get clean && \
      rm -rf /var/lib/apt/lists/*
-
-# Copy x11vnc wrapper script (used when USE_XVFB=1)
-COPY ./docker/x11vnc-wrapper.sh /x11vnc-wrapper.sh
-RUN chmod +x /x11vnc-wrapper.sh
 
 # Select supervisord config based on USE_XVFB
 RUN if [ "$USE_XVFB" = "1" ]; then \
@@ -130,5 +117,4 @@ COPY ./docker/danted.sh /
 
 # Start supervisord
 EXPOSE 8080
-EXPOSE 8083
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
