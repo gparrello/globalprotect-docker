@@ -2,6 +2,7 @@
 
 VNC_HOST="${VNC_HOST:-localhost}"
 VNC_PORT="${VNC_PORT:-8998}"
+STEP_DELAY="${STEP_DELAY:-5}"
 
 if [[ -z "${GP_PORTAL}" ]] || [[ -z "${GP_USERNAME}" ]] || [[ -z "${GP_PASSWORD}" ]] || [[ -z "${GP_TOTP_SECRET}" ]]; then
     echo "GP_PORTAL, GP_USERNAME, GP_PASSWORD, and GP_TOTP_SECRET must be set"
@@ -20,50 +21,50 @@ for i in $(seq 1 $MAX_RETRIES); do
     sleep $RETRY_INTERVAL
 done
 
-sleep 5
+sleep $STEP_DELAY
 
 echo "Typing credentials..."
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key ctrl-a
 vncdo -s "${VNC_HOST}::${VNC_PORT}" type "${GP_PORTAL}"
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
 
-sleep 5
+sleep $STEP_DELAY
 
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key ctrl-a
 vncdo -s "${VNC_HOST}::${VNC_PORT}" type "${GP_USERNAME}"
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
 
-sleep 5
+sleep $STEP_DELAY
 
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key ctrl-a
 vncdo -s "${VNC_HOST}::${VNC_PORT}" type "${GP_PASSWORD}"
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
 
-sleep 5
+sleep $STEP_DELAY
 
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key tab
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key tab
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
 
-sleep 3
+sleep $STEP_DELAY
 
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key tab
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key tab
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
 
-sleep 3
+sleep $STEP_DELAY
 
 TOTP_CODE=$(oathtool --totp -b "${GP_TOTP_SECRET}")
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key ctrl-a
 vncdo -s "${VNC_HOST}::${VNC_PORT}" type "${TOTP_CODE}"
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
 
-sleep 5
+sleep $STEP_DELAY
 
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key tab
 vncdo -s "${VNC_HOST}::${VNC_PORT}" key enter
 
-sleep 3
+sleep $STEP_DELAY
 
 echo "Credentials submitted"
