@@ -85,3 +85,29 @@ iface eth0 inet static
 ```
 
 This ensures response packets to local clients go via the local gateway instead of through the VPN tunnel.
+
+### Default Route Recovery
+
+The VPN overwrites the default route when connected. If the VPN disconnects unexpectedly, the default route is not restored, which prevents the container from reconnecting.
+
+To automatically restore the default route, add a cron job on the container host:
+
+```bash
+echo '* * * * * root ip route add default via 10.90.100.1 dev eth0 2>/dev/null || true' | sudo tee /etc/cron.d/restore-default-route
+sudo chmod 644 /etc/cron.d/restore-default-route
+```
+
+This checks every minute and restores the default route if missing.
+
+## Healthcheck and Auto-Recovery
+
+The container includes a healthcheck that tests the SOCKS proxy every 30 seconds. If the VPN disconnects and the proxy becomes unreachable, the container is marked unhealthy.
+
+An `autoheal` container monitors for unhealthy containers and automatically restarts them:
+
+- **Healthcheck interval**: 30 seconds
+- **Start period**: 120 seconds (time for VPN to connect initially)
+- **Retries**: 3 failed checks before marking unhealthy
+- **Autoheal interval**: 60 seconds
+
+This provides automatic recovery when the VPN connection drops.
