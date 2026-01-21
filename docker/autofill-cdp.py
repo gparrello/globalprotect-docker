@@ -162,6 +162,24 @@ class CDPClient:
         self.ws.close()
 
 
+def handle_okta_username(cdp):
+    """Handle Okta username/identifier entry page."""
+    print("Step: Entering username on Okta...")
+    
+    # Check if username/identifier field exists
+    if cdp.wait_for_element('input[name="identifier"], input[name="username"]', timeout=10):
+        if cdp.fill_input('input[name="identifier"], input[name="username"]', username):
+            print("Username entered")
+            time.sleep(1)
+            
+            # Click submit
+            if cdp.click('input[type="submit"], button[type="submit"]'):
+                print("Clicked submit")
+                return True
+    
+    return False
+
+
 def handle_onelogin_password(cdp):
     """Handle OneLogin password entry page."""
     print("Step: Entering password on OneLogin...")
@@ -296,9 +314,15 @@ def main():
                 time.sleep(step_delay)
         
         elif 'okta.com' in url:
-            # Okta SSO redirect page - usually auto-redirects
-            print("On Okta redirect page, waiting for redirect...")
-            time.sleep(step_delay)
+            # Okta page - check if we need to enter username
+            if cdp.evaluate('document.querySelector("input[name=identifier], input[name=username]") !== null'):
+                print("Okta login page detected, entering username...")
+                if handle_okta_username(cdp):
+                    time.sleep(step_delay)
+            else:
+                # Okta SSO redirect page - usually auto-redirects
+                print("On Okta redirect page, waiting for redirect...")
+                time.sleep(step_delay)
         
         else:
             print(f"Unknown page, waiting...")
