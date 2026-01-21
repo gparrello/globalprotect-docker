@@ -67,8 +67,10 @@ COPY --from=builder /gpagent/install/ /usr
 ENV GPAGENT_ALLOW_PLAIN_PASSWORD=1
 ENV QTWEBENGINE_DISABLE_SANDBOX=1
 ENV QTWEBENGINE_REMOTE_DEBUGGING=9222
-ENV QTWEBENGINE_CHROMIUM_FLAGS="--disable-gpu --disable-dev-shm-usage --no-sandbox --single-process"
+ENV QTWEBENGINE_CHROMIUM_FLAGS="--disable-gpu --disable-dev-shm-usage --no-sandbox --disable-gpu-compositing --use-gl=swiftshader"
 ENV QT_QUICK_BACKEND=software
+ENV QT_X11_NO_MITSHM=1
+ENV QT_XCB_GL_INTEGRATION=none
 
 RUN apt-get -y --no-install-recommends install \
      git
