@@ -4,8 +4,8 @@ VNC_HOST="${VNC_HOST:-localhost}"
 VNC_PORT="${VNC_PORT:-8998}"
 STEP_DELAY="${STEP_DELAY:-5}"
 
-if [[ -z "${GP_PORTAL}" ]] || [[ -z "${GP_USERNAME}" ]] || [[ -z "${GP_PASSWORD}" ]] || [[ -z "${GP_TOTP_SECRET}" ]]; then
-    echo "GP_PORTAL, GP_USERNAME, GP_PASSWORD, and GP_TOTP_SECRET must be set"
+if [[ -z "${GP_USERNAME}" ]] || [[ -z "${GP_PASSWORD}" ]] || [[ -z "${GP_TOTP_SECRET}" ]]; then
+    echo "GP_USERNAME, GP_PASSWORD, and GP_TOTP_SECRET must be set"
     exit 1
 fi
 
