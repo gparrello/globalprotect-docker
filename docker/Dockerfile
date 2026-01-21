@@ -89,12 +89,17 @@ RUN apt-get -y --no-install-recommends install \
      python3-pip \
      netcat-openbsd \
      oathtool \
-     curl && \
+     curl \
+     xvfb \
+     x11vnc && \
      curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
      apt-get install -y nodejs && \
      pip3 install vncdotool && \
      apt-get clean && \
      rm -rf /var/lib/apt/lists/*
+
+# Set display for X11
+ENV DISPLAY=:99
 
 COPY ./docker/autofill-credentials.js /app/
 COPY ./docker/package.json /app/
