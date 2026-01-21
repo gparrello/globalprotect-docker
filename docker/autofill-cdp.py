@@ -1,8 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3 -u
 import json
 import time
 import os
 import subprocess
+import sys
 import requests
 from websocket import create_connection
 

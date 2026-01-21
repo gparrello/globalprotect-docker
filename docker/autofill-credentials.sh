@@ -8,4 +8,5 @@ if [[ -z "${GP_USERNAME}" ]] || [[ -z "${GP_PASSWORD}" ]] || [[ -z "${GP_TOTP_SE
     exit 1
 fi
 
+export PYTHONUNBUFFERED=1
 python3 /autofill-cdp.py
