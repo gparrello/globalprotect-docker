@@ -13,7 +13,10 @@ done
 # Set US keyboard layout for consistent VNC input
 setxkbmap -display :99 us
 
+# Use -usepw disabled, full polling mode for LXC compatibility
 exec x11vnc -display :99 -forever -shared -rfbport 8998 -nopw \
     -noxdamage -noxrecord -noxfixes \
     -norc \
-    -wait 50 -defer 50
+    -noscr -nocursor \
+    -fs 0.5 \
+    -threads
