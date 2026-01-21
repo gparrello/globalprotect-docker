@@ -15,8 +15,9 @@ services:
     env_file:
       - path: .env
         required: false
-    volumes:
-      - ${GP_CONFIG_PATH:-./config/com.yuezk.qt/GPClient.conf}:/root/.config/com.yuezk.qt/GPClient.conf
+    # Optional: mount config file. If not mounted, set GP_PORTAL env var instead.
+    # volumes:
+    #   - ./config/com.yuezk.qt/GPClient.conf:/root/.config/com.yuezk.qt/GPClient.conf
     devices:
       - /dev/net/tun
     cap_add:

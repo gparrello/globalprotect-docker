@@ -113,7 +113,8 @@ RUN cd /app && npm install
 
 COPY ./docker/autofill-credentials.sh /
 COPY ./docker/autofill-cdp.py /
-RUN chmod +x /autofill-credentials.sh /autofill-cdp.py
+COPY ./docker/generate-config.sh /
+RUN chmod +x /autofill-credentials.sh /autofill-cdp.py /generate-config.sh
 
 COPY ./docker/danted.conf.in /etc/
 COPY ./docker/danted.sh /
