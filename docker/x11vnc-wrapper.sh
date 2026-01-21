@@ -10,4 +10,7 @@ for i in $(seq 1 $MAX_RETRIES); do
     sleep 1
 done
 
-exec x11vnc -display :99 -forever -shared -rfbport 8998 -nopw -noxdamage
+exec x11vnc -display :99 -forever -shared -rfbport 8998 -nopw \
+    -noxdamage -noxrecord -noxfixes -noxkb \
+    -norc -norepeat \
+    -wait 50 -defer 50
