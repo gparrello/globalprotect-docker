@@ -35,18 +35,28 @@ def wait_for_devtools():
         time.sleep(1)
     raise Exception("DevTools not available")
 
-def evaluate_js(ws, expression):
+def evaluate_js(ws, expression, timeout=10):
     msg_id = int(time.time() * 1000)
     ws.send(json.dumps({
         'id': msg_id,
         'method': 'Runtime.evaluate',
         'params': {'expression': expression, 'returnByValue': True}
     }))
-    # Read response
-    while True:
-        result = json.loads(ws.recv())
-        if result.get('id') == msg_id:
-            return result
+    # Read response with timeout
+    ws.settimeout(timeout)
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            data = ws.recv()
+            result = json.loads(data)
+            if result.get('id') == msg_id:
+                return result
+            # Ignore events without matching id
+        except Exception as e:
+            print(f"WebSocket error: {e}")
+            break
+    print(f"Timeout waiting for response to message {msg_id}")
+    return None
 
 def main():
     print("Waiting for DevTools...")
