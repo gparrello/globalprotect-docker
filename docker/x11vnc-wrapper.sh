@@ -10,7 +10,10 @@ for i in $(seq 1 $MAX_RETRIES); do
     sleep 1
 done
 
+# Set US keyboard layout for consistent VNC input
+setxkbmap -display :99 us
+
 exec x11vnc -display :99 -forever -shared -rfbport 8998 -nopw \
-    -noxdamage -noxrecord -noxfixes -noxkb \
-    -norc -norepeat \
+    -noxdamage -noxrecord -noxfixes \
+    -norc \
     -wait 50 -defer 50
