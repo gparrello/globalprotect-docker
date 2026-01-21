@@ -23,6 +23,9 @@ RUN cd /gpagent && \
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND noninteractive
 
+# Build arg: set USE_XVFB=1 for LXC/Proxmox compatibility (uses Xvfb + x11vnc)
+ARG USE_XVFB=0
+
 RUN apt-get update
 
 RUN apt-get -y --no-install-recommends install \
@@ -56,8 +59,9 @@ RUN apt-get -y --no-install-recommends install \
 RUN sudo ssh-keygen -t rsa -q -f "/root/.ssh/id_rsa" -N "" && \
     mv /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys
 
-# We use supervisor instead of systemd to start multiple applications.
-COPY ./docker/supervisord.conf /etc/
+# Copy both supervisord configs, select the right one based on USE_XVFB
+COPY ./docker/supervisord.conf /etc/supervisord.conf
+COPY ./docker/supervisord-xvfb.conf /etc/supervisord-xvfb.conf
 COPY ./docker/supervisor-log-prefix.sh /
 
 COPY --from=builder /gpagent/install/ /usr
@@ -83,22 +87,31 @@ WORKDIR /usr/share/noVNC/utils/
 RUN git clone https://github.com/kanaka/websockify
 WORKDIR /root
 
+# Install Xvfb and x11vnc only if USE_XVFB=1
 RUN apt-get -y --no-install-recommends install \
      dante-server \
      net-tools \
      python3-pip \
      netcat-openbsd \
      oathtool \
-     curl \
-     xvfb \
-     x11vnc && \
+     curl && \
+     if [ "$USE_XVFB" = "1" ]; then \
+       apt-get -y --no-install-recommends install xvfb x11vnc; \
+     fi && \
      curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
      apt-get install -y nodejs && \
      pip3 install vncdotool && \
      apt-get clean && \
      rm -rf /var/lib/apt/lists/*
 
-# Set display for X11
+# Select supervisord config based on USE_XVFB
+RUN if [ "$USE_XVFB" = "1" ]; then \
+      mv /etc/supervisord-xvfb.conf /etc/supervisord.conf; \
+    else \
+      rm /etc/supervisord-xvfb.conf; \
+    fi
+
+# Set display for X11 (used when USE_XVFB=1)
 ENV DISPLAY=:99
 
 COPY ./docker/autofill-credentials.js /app/
@@ -115,4 +128,3 @@ COPY ./docker/danted.sh /
 EXPOSE 8080
 EXPOSE 8083
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
-

@@ -3,6 +3,9 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+      args:
+        # Set USE_XVFB=1 for LXC/Proxmox compatibility (uses Xvfb + x11vnc)
+        USE_XVFB: ${USE_XVFB:-0}
     image: globalprotect-docker:vnc-autofill
     hostname: globalprotect
     restart: unless-stopped
@@ -11,6 +14,8 @@ services:
     env_file:
       - path: .env
         required: false
+    volumes:
+      - ./config/com.yuezk.qt:/root/.config/com.yuezk.qt
     devices:
       - /dev/net/tun
     cap_add:
