@@ -11,6 +11,7 @@ services:
     restart: unless-stopped
     tty: true
     shm_size: '512m'
+    network_mode: host
     env_file:
       - path: .env
         required: false
@@ -20,10 +21,6 @@ services:
       - /dev/net/tun
     cap_add:
       - NET_ADMIN
-    ports:
-      - 8090:1080
-    networks:
-      - globalprotect
     labels:
       - "autoheal=true"
     healthcheck:
@@ -42,10 +39,3 @@ services:
       - AUTOHEAL_START_PERIOD=180
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      - globalprotect
-
-networks:
-  globalprotect:
-    external: false
-    name: globalprotect
