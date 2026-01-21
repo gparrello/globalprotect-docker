@@ -66,3 +66,22 @@ sudo ./gpagent
 
 Run `docker-compose logs` in the Terminal and collect the logs.
 
+## Host Networking and Routing
+
+When running with `network_mode: host`, the SOCKS5 proxy listens directly on port **1080** (not 8090).
+
+### Local Network Routing
+
+The VPN sets the default route to go through the tunnel (`tun0`). To allow clients from other local networks to reach the SOCKS proxy, you need to add static routes for those networks.
+
+For example, if the container host is on `10.90.100.0/24` and clients are on `10.80.100.0/24`, add a route in the container host `/etc/network/interfaces`:
+
+```
+auto eth0
+iface eth0 inet static
+        address 10.90.100.142/24
+        gateway 10.90.100.1
+        post-up ip route add 10.80.100.0/24 via 10.90.100.1 dev eth0
+```
+
+This ensures response packets to local clients go via the local gateway instead of through the VPN tunnel.
