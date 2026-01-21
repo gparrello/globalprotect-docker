@@ -79,16 +79,18 @@ ENV QT_XCB_GL_INTEGRATION=none
 RUN apt-get -y --no-install-recommends install \
      git
 
-# Install Xvfb and xdotool only if USE_XVFB=1
+# Install Xvfb only if USE_XVFB=1
 RUN apt-get -y --no-install-recommends install \
      dante-server \
      net-tools \
      python3-pip \
      netcat-openbsd \
      oathtool \
+     jq \
      curl && \
+     pip3 install websocket-client requests && \
      if [ "$USE_XVFB" = "1" ]; then \
-       apt-get -y --no-install-recommends install xvfb xdotool x11-utils; \
+       apt-get -y --no-install-recommends install xvfb x11-utils; \
      fi && \
      curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
      apt-get install -y nodejs && \
@@ -110,7 +112,8 @@ COPY ./docker/package.json /app/
 RUN cd /app && npm install
 
 COPY ./docker/autofill-credentials.sh /
-RUN chmod +x /autofill-credentials.sh
+COPY ./docker/autofill-cdp.py /
+RUN chmod +x /autofill-credentials.sh /autofill-cdp.py
 
 COPY ./docker/danted.conf.in /etc/
 COPY ./docker/danted.sh /
