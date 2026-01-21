@@ -281,7 +281,7 @@ def main():
     time.sleep(step_delay)
     
     # Main authentication loop - handle multiple pages/steps
-    max_steps = 10
+    max_steps = 20
     for step in range(max_steps):
         try:
             url = cdp.get_url()
@@ -302,6 +302,12 @@ def main():
                 print("OneLogin page not rendered, reloading...")
                 cdp.send('Page.reload', {'ignoreCache': True})
                 time.sleep(5)
+                continue
+            
+            # Handle intermediate "Verifying certificate" state
+            if 'Verifying' in page_text and 'Certificate' in page_text:
+                print("Verifying certificate, waiting for page to load...")
+                time.sleep(3)
                 continue
             
             if 'Enter your code' in page_text:
