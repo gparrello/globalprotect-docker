@@ -40,3 +40,27 @@ services:
       - AUTOHEAL_START_PERIOD=180
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+
+  mtu-fixer:
+    image: alpine
+    network_mode: host
+    container_name: mtu-fixer
+    cap_add:
+      - NET_ADMIN
+    restart: always
+    environment:
+      - TARGET_MTU=1350  # Change this value here or in your .env
+      - INTERFACE_NAME=tun0
+    command: >
+      sh -c "
+      echo 'Starting MTU fixer for $$INTERFACE_NAME at $$TARGET_MTU...' ;
+      while true; do
+        if [ -d /sys/class/net/$$INTERFACE_NAME ]; then
+          CURRENT=$$(cat /sys/class/net/$$INTERFACE_NAME/mtu) ;
+          if [ \"$$CURRENT\" != \"$$TARGET_MTU\" ]; then
+            ip link set dev $$INTERFACE_NAME mtu $$TARGET_MTU ;
+            echo \"[$(date)] MTU adjusted from $$CURRENT to $$TARGET_MTU\" ;
+          fi ;
+        fi ;
+        sleep 10 ;
+      done"
